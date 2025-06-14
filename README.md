@@ -33,14 +33,14 @@ This tool is designed to be lightweight, educational, and locally relevant — s
   * Daily or monthly **waste volume**
 * Emission factors are based on IPCC guidelines, with potential for localization
 
-### Report Generation & Visualization (Streamlit)
+### Report Generation & Visualization
 
 * Sector-wise and total GHG emission outputs (in CO₂e)
 * Graphical representation of emission breakdowns
 * Exportable summaries (PDF/CSV planned)
 * Simulated use cases from barangays and schools
 
-### Frontend Microsite (AstroJS)
+### Frontend Microsite
 
 * Educational content:
 
