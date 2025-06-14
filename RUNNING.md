@@ -4,6 +4,8 @@
 
 This tool is designed to be lightweight, educational, and locally relevant — supporting GHG emissions awareness and its climate change impact and reporting at the grassroots level.
 
+This section provides a list of the common CLI commands used during the entire development process.
+
 ---
 
 ## CLI Commands

@@ -2,7 +2,7 @@
 
 **GHG Scout PH** is an open-source, API-driven, community-based greenhouse gas (GHG) emission web application of the [GHG Data Explorer PH](https://ghgph-55623.firebaseapp.com/) designed to **empower schools and LGUs in the Philippines** to monitor, estimate, and visualize their local GHG emissions. It bridges the gap between national-level reporting systems like the [Philippine Greenhouse Gas Inventory Management and Reporting System (PGHGIMRS)](https://niccdies.climate.gov.ph/ghg-inventory) and community-level participation.
 
-This tool is designed to be lightweight, educational, and locally relevant — supporting GHG emissions awareness and its climate change impact and reporting at the grassroots level.
+This tool is designed to be lightweight, educational, and locally relevant — supporting GHG emissions awareness and its climate change impact and reporting at the grassroots level. Please check the [implementation plan](https://github.com/imperionite/ghg-scout/blob/main/IMPLEMENTATION.md) for details.
 
 ---
 
@@ -80,8 +80,12 @@ This system is designed in accordance with the **Philippine Data Privacy Act of 
 * User data is limited to what's essential (username, affiliation)
 * Usage is transparent and educational
 
+## CLI Commands
+
+Please check this [link](https://github.com/imperionite/ghg-scout/blob/main/RUNNING.md).
+
 ## Implementation Plan
 
-Please check this link.
+Please check this [link](https://github.com/imperionite/ghg-scout/blob/main/IMPLEMENTATION.md).
 
 

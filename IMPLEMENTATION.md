@@ -1,4 +1,4 @@
-**Project Documentation and Implementation Plan**
+# ghg-scout: Project Documentation and Implementation Plan
 
 **Project Title:** GHG Scout PH: A Community-Based GHG Estimation and Awareness Tool<br>
 **Project Type:** Proof of Concept (POC)<br>
@@ -123,7 +123,7 @@ This project draws direct inspiration from [PGHGIMRS](https://niccdies.climate.g
 
 ---
 
-**Prepared by:** Arnel Imperial
-**Course:** People and Earth’s Ecosystem (PEE)
-**Institution:** MMDC
+**Prepared by:** Arnel Imperial<br>
+**Course:** People and Earth’s Ecosystem (PEE)<br>
+**Institution:** MMDC<br>
 **Date:** 06.14.2025
