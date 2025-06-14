@@ -17,7 +17,7 @@ This tool is designed to be lightweight, educational, and locally relevant — s
 
 ## Key Features
 
-### User Authentication (FastAPI + MongoDB)
+### User Authentication 
 
 * Secure user registration with **username, password, and community affiliation** (LGU or School)
 * Token-based login and authorization system (non-JWT)
