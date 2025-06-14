@@ -1,0 +1,47 @@
+#### VARIABLES
+@token=1c390979-90f9-469f-8561-b522da974a74
+@userId1=684d48af81bf62447c602be4
+@userId2=684d493a81bf62447c602be7
+####################################
+
+### Register
+POST http://localhost:8000/api/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "password": "testpass123",
+  "community_type": "University",
+  "community_name": "Makati University",
+  "region": "National Capital Region",
+  "city": "Makati"
+}
+
+### Login
+POST http://localhost:8000/api/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "password": "testpass123"
+}
+
+### Get Profile
+GET http://localhost:8000/api/me HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Update User by ID
+PATCH http://localhost:8000/api/user/{{userId2}} HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "city": "Makati City",
+  "community_type": "University",
+  "community_name": "Makati University",
+  "region": "NCR"
+}
+
+### Delete User by ID
+DELETE http://localhost:8000/api/user/{{userId2}}
+Authorization: Bearer {{token}}
