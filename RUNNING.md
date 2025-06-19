@@ -41,20 +41,47 @@ db
 # Get mongodb container names or id, if needed
 docker ps
 docker exec -it mongodb mongosh -u mongoadmin -p secret --authenticationDatabase admin
+# show all db
+show databasesdb.stats()
 # Then, once inside mongosh, switch to app database
 use ghg_scout
+
+```
+
+**Common commands**
+
+```sh
+# Get stats
+db.stats()
+# Drop current DB
+db.dropDatabase()
+# List collections on current DB
+show collections
+# Drop collection
+db.collection_name.drop()
+# Find all document
+db.collection_name.find()
+# Exit shell
+# Count documents
+db.collection_name.countDocuments()
+exit
 
 ```
 
 **To run the app**
 
 ```sh
+# initial run only when DB is not yet seeded
+./build.sh
 # main: the name of your Python file (without .py)
 # app: the name of your FastAPI instance
 # --reload: enables auto-reload on code changes (useful for development)
 uvicorn main:app --reload # main.py
 # Docs: http://127.0.0.1:8000/docs
 # Root: http://127.0.0.1:8000
+
+# upgrade pip and install dependencies from requirements file
+pip install --upgrade pip && pip install -r requirements.txt
 
 ```
 

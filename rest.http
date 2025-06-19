@@ -1,29 +1,32 @@
-#### VARIABLES
-@token=1c390979-90f9-469f-8561-b522da974a74
-@userId1=684d48af81bf62447c602be4
+VARIABLES
+@token=5324efd4-0831-44d2-825b-1fa29cd7ed02
+@userId1=685429a5a6871f7d068e6005
 @userId2=684d493a81bf62447c602be7
 ####################################
+Seed Data
 
+# All usernames will be user001 to user200.
+# All have the password: seed-password
 ### Register
 POST http://localhost:8000/api/register HTTP/1.1
 Content-Type: application/json
 
 {
-  "username": "testuser1",
-  "password": "testpass123",
-  "community_type": "University",
-  "community_name": "Makati University",
-  "region": "National Capital Region",
-  "city": "Makati"
+"username": "testuser1",
+"password": "testpass123",
+"community_type": "School",
+"community_name": "Makati University",
+"region": "National Capital Region (NCR)",
+"city": "Makati"
 }
 
-### Login
+###Login
 POST http://localhost:8000/api/login HTTP/1.1
 Content-Type: application/json
 
 {
-  "username": "testuser1",
-  "password": "testpass123"
+"username": "user007",
+"password": "seed-password"
 }
 
 ### Get Profile
@@ -31,17 +34,162 @@ GET http://localhost:8000/api/me HTTP/1.1
 Authorization: Bearer {{token}}
 
 ### Update User by ID
-PATCH http://localhost:8000/api/user/{{userId2}} HTTP/1.1
+PATCH http://localhost:8000/api/user/{{userId1}} HTTP/1.1
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "city": "Makati City",
-  "community_type": "University",
-  "community_name": "Makati University",
-  "region": "NCR"
+"city": "Makati City",
+"community_type": "School",
+"community_name": "Makati University",
+"region": "National Capital Region (NCR)"
 }
 
 ### Delete User by ID
-DELETE http://localhost:8000/api/user/{{userId2}}
+DELETE http://localhost:8000/api/user/{{userId1}} HTTP/1.1
+Authorization: Bearer {{token}}
+
+########### Data Submission & Retrieval ##################
+
+### Submit ENERGY sector data (all fields, new model)
+POST http://localhost:8000/api/ghg/submit HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"sector": "energy",
+"electricity_consumed_kwh": 300,
+"lpg_used_kg": 12,
+"kerosene_used_liters": 4,
+"firewood_used_kg": 15,
+"diesel_used_liters": 10,
+"gasoline_used_liters": 8,
+"coal_used_kg": 5
+}
+
+### Submit TRANSPORT sector data (new model)
+POST http://localhost:8000/api/ghg/submit HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"sector": "transport",
+"vehicle_type": "jeepney",
+"fuel_type": "diesel",
+"number_of_vehicles": 2,
+"distance_travelled_daily_km": 20,
+"travel_frequency_per_week": 6,
+"trips_per_day": 3
+}
+
+### Submit WASTE sector data (new model)
+POST http://localhost:8000/api/ghg/submit HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"sector": "waste",
+"waste_generated_kg_per_month": 50,
+"organic_fraction_percent": 60,
+"waste_disposal_method": "landfill",
+"methane_capture": true
+}
+
+### Submit AGRICULTURE sector data (new model)
+POST http://localhost:8000/api/ghg/submit HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"sector": "agriculture",
+"number_of_cattle": 3,
+"number_of_carabao": 1,
+"number_of_goats": 2,
+"number_of_pigs": 4,
+"number_of_chickens": 20,
+"manure_management": "composting",
+"rice_paddy_area_hectares": 0.5,
+"rice_water_management": "continuous_flooding",
+"fertilizer_type": "synthetic",
+"fertilizer_applied_kg": 10
+}
+
+### Submit IPPU sector data (new model)
+POST http://localhost:8000/api/ghg/submit HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"sector": "ippu",
+"cement_produced_tonnes": 5,
+"lime_produced_tonnes": 2,
+"steel_produced_tonnes": 1,
+"refrigerant_consumed_kg": 1,
+"solvent_used_liters": 10,
+"other_process_emissions_CO2e_tonnes": 0.5
+}
+
+### Community Specific ####
+
+### Community Summary
+GET http://localhost:8000/api/ghg/community-summary HTTP/1.1
+Content-Type: application/json
+
+### Community Summary aggregated by type
+GET http://localhost:8000/api/ghg/aggregated-by-type HTTP/1.1
+Content-Type: application/json
+
+### Regional trend summary
+GET http://localhost:8000/api/ghg/regional-trend-summary HTTP/1.1
+Content-Type: application/json
+
+### Timeseries Chart
+GET http://localhost:8000/api/ghg/timeseries HTTP/1.1
+Content-Type: application/json
+
+#### SECTORAL Specific #####
+
+### Sectoral by Region
+GET http://localhost:8000/api/ghg/sectoral-by-region HTTP/1.1
+Content-Type: application/json
+
+### Sectoral trend
+GET http://localhost:8000/api/ghg/sectoral-trend HTTP/1.1
+Content-Type: application/json
+
+### Sectoral by community type
+GET http://localhost:8000/api/ghg/sectoral-by-community-type HTTP/1.1
+Content-Type: application/json
+
+### Top by sector
+GET http://localhost:8000/api/ghg/top-by-sector HTTP/1.1
+Content-Type: application/json
+
+
+###Top Emitters
+GET http://localhost:8000/api/ghg/top-emitters HTTP/1.1
+Content-Type: application/json
+
+### Lowest Emitters
+GET http://localhost:8000/api/ghg/lowest-emitters HTTP/1.1
+Content-Type: application/json
+
+
+#### USER Specific #####
+
+### User vs National Average
+GET http://localhost:8000/api/ghg/compare-user-to-average/{{userId1}} HTTP/1.1
+Content-Type: application/json
+
+### User Trend
+GET http://localhost:8000/api/ghg/user-trend/{{userId1}} HTTP/1.1
+Content-Type: application/json
+
+### User own summary
+GET http://localhost:8000/api/ghg/user-summary/{{userId1}} HTTP/1.1
+Content-Type: application/json
+
+###LLM Interpretation based on user summary
+GET http://localhost:8000/api/ghg/my-summary-interpret HTTP/1.1
+Content-Type: application/json
 Authorization: Bearer {{token}}
