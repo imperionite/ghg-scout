@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
+from typing import List, Optional
+from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from bson.objectid import ObjectId
 from fastapi.concurrency import run_in_threadpool
@@ -143,10 +145,24 @@ async def get_community_summary():
     return [{"region": r["_id"].get("region"), "city": r["_id"].get("city"), "total_emissions": round(r["total_emissions"], 2), "count": r["count"]} for r in result]
 
 @router.get("/timeseries")
-async def get_timeseries_summary():
+async def get_timeseries_summary(regions: Optional[str] = Query(default=None)):
+    match_stage = {}
+    if regions:
+        region_list = regions.split(',')
+        match_stage = {"user_info.region": {"$in": region_list}}
+
     pipeline = [
-        {"$group": {"_id": {"date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}}},
-                    "total_emissions": {"$sum": "$estimated_co2e_kg"}, "count": {"$sum": 1}}},
+        {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user_info"}},
+        {"$unwind": "$user_info"},
+    ]
+    if match_stage:
+        pipeline.append({"$match": match_stage})
+    pipeline += [
+        {"$group": {
+            "_id": {"date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}}},
+            "total_emissions": {"$sum": "$estimated_co2e_kg"},
+            "count": {"$sum": 1}
+        }},
         {"$sort": {"_id.date": 1}}
     ]
     result = await db.ghg_submissions.aggregate(pipeline).to_list(length=None)
@@ -165,10 +181,19 @@ async def get_timeseries_summary():
 # Chart: Compare average emissions per community type
 # Usage: Identify which community types are most polluting on average
 @router.get("/aggregated-by-type")
-async def aggregated_by_type():
+async def aggregated_by_type(regions: Optional[str] = Query(default=None)):
+    match_stage = {}
+    if regions:
+        region_list = regions.split(',')
+        match_stage = {"user_info.region": {"$in": region_list}}
+
     pipeline = [
         {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user_info"}},
         {"$unwind": "$user_info"},
+    ]
+    if match_stage:
+        pipeline.append({"$match": match_stage})
+    pipeline += [
         {"$group": {
             "_id": "$user_info.community_type",
             "total_emissions": {"$sum": "$estimated_co2e_kg"},
@@ -182,10 +207,20 @@ async def aggregated_by_type():
 # Returns: Emissions over time grouped by region
 # Chart: Stacked or grouped line chart per region
 @router.get("/regional-trend-summary")
-async def regional_trend_summary():
+async def regional_trend_summary(regions: List[str] = Query(default=None)):
+    match_stage = {}
+    if regions:
+        match_stage["user_info.region"] = {"$in": regions}
+
     pipeline = [
-        {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user_info"}},
+        {"$lookup": {
+            "from": "users",
+            "localField": "user_id",
+            "foreignField": "_id",
+            "as": "user_info"
+        }},
         {"$unwind": "$user_info"},
+        *([{"$match": match_stage}] if match_stage else []),
         {"$group": {
             "_id": {
                 "date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
@@ -195,8 +230,9 @@ async def regional_trend_summary():
         }},
         {"$sort": {"_id.date": 1}}
     ]
+
     result = await db.ghg_submissions.aggregate(pipeline).to_list(None)
-    
+
     from collections import defaultdict
     grouped = defaultdict(lambda: {"labels": [], "data": []})
     for r in result:
@@ -204,8 +240,9 @@ async def regional_trend_summary():
         region = r["_id"]["region"]
         grouped[region]["labels"].append(date)
         grouped[region]["data"].append(round(r["total_emissions"], 2))
-    
+
     return grouped
+
 
 # Returns: Time-series GHG data per sector for a given user
 # Chart: Sectoral trend lines (weekly or monthly) for a specific community
@@ -242,10 +279,19 @@ async def user_trend(user_id: str):
 # Sectoral Emissions by Region or City
 # Purpose: See which sectors dominate emissions in each region or city.
 @router.get("/sectoral-by-region")
-async def sectoral_by_region():
+async def sectoral_by_region(regions: Optional[str] = Query(default=None)):
+    match_stage = {}
+    if regions:
+        region_list = regions.split(',')
+        match_stage = {"user.region": {"$in": region_list}}
+
     pipeline = [
         {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user"}},
         {"$unwind": "$user"},
+    ]
+    if match_stage:
+        pipeline.append({"$match": match_stage})
+    pipeline += [
         {"$group": {
             "_id": {
                 "region": "$user.region",
@@ -256,7 +302,7 @@ async def sectoral_by_region():
         {"$sort": {"_id.region": 1, "_id.sector": 1}}
     ]
     result = await db.ghg_submissions.aggregate(pipeline).to_list(None)
-    
+
     from collections import defaultdict
     data = defaultdict(lambda: {"labels": [], "data": []})
     for r in result:
@@ -294,10 +340,19 @@ async def sectoral_trend():
 # Sectoral Composition by Community Type
 # Purpose: Identify what emissions sectors dominate for schools, barangays, LGUs, etc.
 @router.get("/sectoral-by-community-type")
-async def sectoral_by_community_type():
+async def sectoral_by_community_type(regions: Optional[str] = Query(default=None)):
+    match_stage = {}
+    if regions:
+        region_list = regions.split(',')
+        match_stage = {"user.region": {"$in": region_list}}
+
     pipeline = [
         {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user"}},
         {"$unwind": "$user"},
+    ]
+    if match_stage:
+        pipeline.append({"$match": match_stage})
+    pipeline += [
         {"$group": {
             "_id": {
                 "community_type": "$user.community_type",
@@ -322,7 +377,12 @@ async def sectoral_by_community_type():
 # Sector Contribution Ranking (Top Contributors Globally per Sector)
 # Purpose: Who are the top GHG emitters in each sector?
 @router.get("/top-by-sector")
-async def top_by_sector(limit: int = 5):
+async def top_by_sector(limit: int = 5, regions: Optional[str] = Query(default=None)):
+    match_stage = {}
+    if regions:
+        region_list = regions.split(',')
+        match_stage = {"user.region": {"$in": region_list}}
+
     pipeline = [
         {"$group": {
             "_id": {
@@ -341,29 +401,26 @@ async def top_by_sector(limit: int = 5):
         sector = record["_id"]["sector"]
         grouped[sector].append(record)
 
-    # Only keep top N for each sector
     top_by_sector = {sector: records[:limit] for sector, records in grouped.items()}
+    user_ids = [r["_id"]["user_id"] for records in top_by_sector.values() for r in records]
+    users = await db.users.find({"_id": {"$in": user_ids}}).to_list(None)
+    user_map = {u["_id"]: u for u in users}
 
-    # Enrich with user info
     response = {}
     for sector, records in top_by_sector.items():
-        user_ids = [r["_id"]["user_id"] for r in records]
-        users = await db.users.find({"_id": {"$in": user_ids}}).to_list(None)
-        user_map = {u["_id"]: u for u in users}
-
-        response[sector] = []
+        filtered = []
         for rec in records:
             uid = rec["_id"]["user_id"]
             user = user_map.get(uid)
-            if user:
-                response[sector].append({
+            if user and (not regions or user.get("region") in region_list):
+                filtered.append({
                     "user_id": str(uid),
                     "community_name": user.get("community_name"),
                     "region": user.get("region"),
                     "city": user.get("city"),
                     "total_emissions": round(rec["total_emissions"], 2)
                 })
-
+        response[sector] = filtered
     return response
 
 
