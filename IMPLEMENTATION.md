@@ -12,7 +12,7 @@
 
 **GHG Scout PH** is a prototype API-driven, database-backed, and Large Language Model (LLM)-enabled software application designed to empower local communities—particularly schools and Local Government Units (LGUs)—to estimate and interpret their greenhouse gas (GHG) emissions in a simplified, accessible, and localized manner.
 
-Inspired by the national initiative, the [Philippine Greenhouse Gas Inventory Management and Reporting System (PGHGIMRS)](https://niccdies.climate.gov.ph/ghg-inventory) and [its software model](https://drive.google.com/file/d/1S8Nh_YMzM4LizaWZ1gNxCKha9REjosyA/view?usp=sharing) under the [National Integrated Climate Change Database Information and Exchange System (NICCDIES)](https://niccdies.climate.gov.ph/niccdies) and the [IPCC guidelines](https://www.ipcc-nggip.iges.or.jp/public/2006gl/), this project aims to raise awareness and simulate community-level implementation of GHG monitoring, ensuring scientific rigor, local relevance, and universal applicability.
+Inspired by the national initiative, the [Philippine Greenhouse Gas Inventory Management and Reporting System (PGHGIMRS)](https://niccdies.climate.gov.ph/ghg-inventory) and [its software model](https://drive.google.com/file/d/1S8Nh_YMzM4LizaWZ1gNxCKha9REjosyA/view?usp=sharing) under the [National Integrated Climate Change Database Information and Exchange System (NICCDIES)](https://niccdies.climate.gov.ph) and the [IPCC guidelines](https://www.ipcc-nggip.iges.or.jp/public/2006gl/), this project aims to raise awareness and simulate community-level implementation of GHG monitoring, ensuring scientific rigor, local relevance, and universal applicability.
 
 Community-level GHG monitoring is vital for fostering local climate action, enhancing data granularity, and supporting national climate commitments.
 
@@ -107,7 +107,7 @@ Community-level GHG monitoring is vital for fostering local climate action, enha
 
 ## Alignment with National Framework
 
-This project draws direct inspiration from [PGHGIMRS](https://niccdies.climate.gov.ph/ghg-inventory) and [NICCDIES](https://niccdies.climate.gov.ph/niccdies), designed to:
+This project draws direct inspiration from [PGHGIMRS](https://niccdies.climate.gov.ph/ghg-inventory) and [NICCDIES](https://niccdies.climate.gov.ph), designed to:
 
 - Complement national systems with grassroots data awareness.
 - Encourage civic participation in climate monitoring and reporting.
@@ -224,14 +224,14 @@ co2e = (
 ## References
 
 - [Philippine GHG Inventory Management and Reporting System (PGHGIMRS)](https://niccdies.climate.gov.ph/ghg-inventory)
-- [Philippine GHG Manual](https://niccdies.climate.gov.ph/sites/default/files/2021-09/Philippine%20GHG%20Manual%20Volume%201.pdf)
 - [IPCC 2006 Guidelines for National Greenhouse Gas Inventories](https://www.ipcc-nggip.iges.or.jp/public/2006gl/)
+- [Climate Change Commission](https://climate.gov.ph/about-us)
 
 ---
 
 ## Attribution
 
-GHG Scout PH is inspired by the Philippine Climate Change Commission’s national GHG inventory and is designed for community-level empowerment, transparency, and scientific integrity.
+GHG Scout PH is inspired by the Philippine [Climate Change Commission’s national GHG inventory](https://climate.gov.ph/about-us) and is designed for community-level empowerment, transparency, and scientific integrity.
 
 ---
 

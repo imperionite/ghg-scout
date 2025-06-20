@@ -1,18 +1,31 @@
 import os
 import json
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
 from routes.auth import router as auth_router
 from routes import ghg
-from dotenv import load_dotenv
 
 load_dotenv()
 
+# Lifespan event for startup and shutdown tasks
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="GHG Scout PH - API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+    yield
+    # Shutdown
 
-origins_str = os.getenv("ORIGINS", "[]")  # Default to empty list string if not set
-origins = json.loads(origins_str)  # Convert JSON string to list
+# Create app with lifespan
+app = FastAPI(title="GHG Scout PH - API", lifespan=lifespan)
+
+# CORS config
+origins_str = os.getenv("ORIGINS", "[]")
+origins = json.loads(origins_str)
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,5 +35,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include routes
 app.include_router(auth_router, prefix="/api")
 app.include_router(ghg.router, prefix="/api/ghg", tags=["GHG"])

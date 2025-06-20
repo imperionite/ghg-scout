@@ -80,8 +80,7 @@ uvicorn main:app --reload # main.py
 # Docs: http://127.0.0.1:8000/docs
 # Root: http://127.0.0.1:8000
 
-# upgrade pip and install dependencies from requirements file
-pip install --upgrade pip && pip install -r requirements.txt
-
+# create new virtual env and upgrade pip and install dependencies from requirements file
+pip cache purge && rm -rf venv && python -m venv venv && source vevn/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
 ```
 

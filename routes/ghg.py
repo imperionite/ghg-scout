@@ -1,10 +1,12 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from typing import List, Optional
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from bson.objectid import ObjectId
 from fastapi.concurrency import run_in_threadpool
-import os
+from fastapi_cache.decorator import cache
+
 from huggingface_hub import InferenceClient
 
 from routes.auth import get_current_user
@@ -133,6 +135,7 @@ async def submit(submission: GHGSubmission, current_user=Depends(get_current_use
     }
 
 @router.get("/community-summary")
+@cache(expire=300)  # 5 minutes
 async def get_community_summary():
     pipeline = [
         {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user_info"}},
@@ -145,6 +148,7 @@ async def get_community_summary():
     return [{"region": r["_id"].get("region"), "city": r["_id"].get("city"), "total_emissions": round(r["total_emissions"], 2), "count": r["count"]} for r in result]
 
 @router.get("/timeseries")
+@cache(expire=600)
 async def get_timeseries_summary(regions: Optional[str] = Query(default=None)):
     match_stage = {}
     if regions:
@@ -181,6 +185,7 @@ async def get_timeseries_summary(regions: Optional[str] = Query(default=None)):
 # Chart: Compare average emissions per community type
 # Usage: Identify which community types are most polluting on average
 @router.get("/aggregated-by-type")
+@cache(expire=300)
 async def aggregated_by_type(regions: Optional[str] = Query(default=None)):
     match_stage = {}
     if regions:
@@ -207,6 +212,7 @@ async def aggregated_by_type(regions: Optional[str] = Query(default=None)):
 # Returns: Emissions over time grouped by region
 # Chart: Stacked or grouped line chart per region
 @router.get("/regional-trend-summary")
+@cache(expire=900)
 async def regional_trend_summary(regions: List[str] = Query(default=None)):
     match_stage = {}
     if regions:
@@ -279,6 +285,7 @@ async def user_trend(user_id: str):
 # Sectoral Emissions by Region or City
 # Purpose: See which sectors dominate emissions in each region or city.
 @router.get("/sectoral-by-region")
+@cache(expire=300)
 async def sectoral_by_region(regions: Optional[str] = Query(default=None)):
     match_stage = {}
     if regions:
@@ -315,6 +322,7 @@ async def sectoral_by_region(regions: Optional[str] = Query(default=None)):
 #  Sectoral Trend Over Time (National)
 # Purpose: Analyze which sectors are increasing or decreasing over time
 @router.get("/sectoral-trend")
+@cache(expire=900)
 async def sectoral_trend():
     pipeline = [
         {"$group": {
@@ -340,6 +348,7 @@ async def sectoral_trend():
 # Sectoral Composition by Community Type
 # Purpose: Identify what emissions sectors dominate for schools, barangays, LGUs, etc.
 @router.get("/sectoral-by-community-type")
+@cache(expire=300)
 async def sectoral_by_community_type(regions: Optional[str] = Query(default=None)):
     match_stage = {}
     if regions:
@@ -377,6 +386,7 @@ async def sectoral_by_community_type(regions: Optional[str] = Query(default=None
 # Sector Contribution Ranking (Top Contributors Globally per Sector)
 # Purpose: Who are the top GHG emitters in each sector?
 @router.get("/top-by-sector")
+@cache(expire=600)
 async def top_by_sector(limit: int = 5, regions: Optional[str] = Query(default=None)):
     match_stage = {}
     if regions:
@@ -455,6 +465,7 @@ async def get_user_summary(user_id: str):
 
 
 @router.get("/top-emitters")
+@cache(expire=1800)
 async def get_top_emitters(limit: int = 5):
     pipeline = [
         {"$group": {"_id": "$user_id", "total_emissions": {"$sum": "$estimated_co2e_kg"}}}
@@ -490,6 +501,7 @@ async def get_top_emitters(limit: int = 5):
 
 
 @router.get("/lowest-emitters")
+@cache(expire=1800)
 async def get_lowest_emitters(limit: int = 5):
     pipeline = [
         {"$group": {"_id": "$user_id", "total_emissions": {"$sum": "$estimated_co2e_kg"}}}
