@@ -4,7 +4,9 @@ from typing import List, Optional
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from bson.objectid import ObjectId
+from bson.regex import Regex
 from fastapi.concurrency import run_in_threadpool
+from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
 
 from huggingface_hub import InferenceClient
@@ -128,6 +130,7 @@ async def submit(submission: GHGSubmission, current_user=Depends(get_current_use
         "estimated_co2e_kg": round(co2e, 2)
     })
     result = await db.ghg_submissions.insert_one(doc)
+    await FastAPICache.clear() # invalidate all cache
     return {
         "message": f"GHG data submitted for {submission.sector} sector successfully",
         "id": str(result.inserted_id),
@@ -216,7 +219,8 @@ async def aggregated_by_type(regions: Optional[str] = Query(default=None)):
 async def regional_trend_summary(regions: List[str] = Query(default=None)):
     match_stage = {}
     if regions:
-        match_stage["user_info.region"] = {"$in": regions}
+        # Modify the match to use regex for partial matches
+        match_stage["user_info.region"] = {"$in": [Regex(f".*{region}.*", "i") for region in regions]}
 
     pipeline = [
         {"$lookup": {

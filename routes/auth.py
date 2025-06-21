@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
 from uuid import uuid4
+from fastapi_cache import FastAPICache
 
 from core.db import db
 from models.schemas import *
@@ -50,6 +51,11 @@ async def login(data: UserLogin):
     user = await db.users.find_one({"username": data.username})
     if not user or not verify_password(data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    # Invalidate all cached data
+    if FastAPICache.get_backend():
+        await FastAPICache.clear()
+
     token = str(uuid4())
     await db.tokens.insert_one({"token": token, "username": data.username})
     return TokenResponse(
@@ -81,7 +87,13 @@ async def update_user(user_id: str, update: UserUpdate, current_user=Depends(get
         raise HTTPException(status_code=403, detail="You can only update your own account")
     fields = {k: v for k, v in update.dict(exclude_unset=True).items()}
     fields["updated_at"] = datetime.now(timezone.utc)
+
     await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": fields})
+
+    # Invalidate all cached data
+    if FastAPICache.get_backend():
+        await FastAPICache.clear()
+
     return {"message": "User updated successfully"}
 
 @router.delete("/user/{user_id}")
@@ -90,4 +102,9 @@ async def delete_user(user_id: str, current_user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="You can only delete your own account")
     await db.users.delete_one({"_id": ObjectId(user_id)})
     await db.tokens.delete_many({"username": current_user["username"]})
+
+    # Invalidate all cached data
+    if FastAPICache.get_backend():
+        await FastAPICache.clear()
+        
     return {"message": "User deleted successfully"}
