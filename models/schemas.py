@@ -84,34 +84,29 @@ class GHGSubmissionWaste(BaseModel):
 # Agriculture Sector
 class GHGSubmissionAgriculture(BaseModel):
     sector: Literal["agriculture"] = "agriculture"
-
-    # Livestock counts - common types in the Philippines
+    # Livestock counts
     number_of_cattle: Optional[int] = Field(0, ge=0, description="Number of cattle (beef/dairy)")
     number_of_carabao: Optional[int] = Field(0, ge=0, description="Number of carabao (water buffalo)")
     number_of_goats: Optional[int] = Field(0, ge=0, description="Number of goats")
     number_of_pigs: Optional[int] = Field(0, ge=0, description="Number of pigs")
     number_of_chickens: Optional[int] = Field(0, ge=0, description="Number of chickens")
 
-    # Manure management - simple category
     manure_management: Optional[Literal[
         "dry_lot", "pasture", "lagoon", "composting", "none"
     ]] = "none"
 
-    # Rice cultivation
     rice_paddy_area_hectares: Optional[float] = Field(0.0, ge=0, description="Area of rice paddies (hectares)")
     rice_water_management: Optional[Literal[
         "continuous_flooding", "intermittent_flooding", "dry_cultivation"
     ]] = "continuous_flooding"
 
-    # Fertilizer use
     fertilizer_type: Optional[Literal["synthetic", "organic", "none"]] = "none"
     fertilizer_applied_kg: Optional[float] = Field(0.0, ge=0, description="Amount of fertilizer applied (kg)")
 
 
-# IPPU Sector (Industrial Processes and Product Use)
+# IPPU Sector
 class GHGSubmissionIPPU(BaseModel):
     sector: Literal["ippu"] = "ippu"
-
     cement_produced_tonnes: Optional[float] = Field(0.0, ge=0, description="Cement produced (tonnes)")
     lime_produced_tonnes: Optional[float] = Field(0.0, ge=0, description="Lime produced (tonnes)")
     steel_produced_tonnes: Optional[float] = Field(0.0, ge=0, description="Steel produced (tonnes)")
