@@ -1,13 +1,15 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, Query, status
+from fastapi.concurrency import run_in_threadpool
+from fastapi_cache import FastAPICache
+from fastapi_cache.decorator import cache
+from fastapi.responses import JSONResponse
 from typing import List, Optional
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from bson.objectid import ObjectId
 from bson.regex import Regex
-from fastapi.concurrency import run_in_threadpool
-from fastapi_cache import FastAPICache
-from fastapi_cache.decorator import cache
+
 
 from huggingface_hub import InferenceClient
 
@@ -437,37 +439,6 @@ async def top_by_sector(limit: int = 5, regions: Optional[str] = Query(default=N
         response[sector] = filtered
     return response
 
-
-
-@router.get("/user-summary/{user_id}")
-async def get_user_summary(user_id: str):
-    try:
-        object_id = ObjectId(user_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid user ID format")
-
-    pipeline = [
-        {"$match": {"user_id": object_id}},
-        {"$group": {
-            "_id": "$sector",
-            "total_emissions": {"$sum": "$estimated_co2e_kg"},
-            "count": {"$sum": 1}
-        }},
-        {"$sort": {"_id": 1}}
-    ]
-    result = await db.ghg_submissions.aggregate(pipeline).to_list(length=None)
-
-    return {
-        "user_id": user_id,
-        "labels": [r["_id"] for r in result],
-        "datasets": [{
-            "label": "User CO2e per Sector (kg)",
-            "data": [round(r["total_emissions"], 2) for r in result],
-            "backgroundColor": ["#36A2EB", "#FF6384", "#FFCE56", "#4BC0C0"]
-        }]
-    }
-
-
 @router.get("/top-emitters")
 @cache(expire=1800)
 async def get_top_emitters(limit: int = 5):
@@ -501,9 +472,6 @@ async def get_top_emitters(limit: int = 5):
         for doc in top if (uid := doc["_id"]) in user_map
     ]
 
-
-
-
 @router.get("/lowest-emitters")
 @cache(expire=1800)
 async def get_lowest_emitters(limit: int = 5):
@@ -536,7 +504,35 @@ async def get_lowest_emitters(limit: int = 5):
         }
         for doc in bottom if (uid := doc["_id"]) in user_map
     ]
+# -------------------------------- USER SPECIFIC ------------------------------ #
 
+@router.get("/user-summary/{user_id}")
+async def get_user_summary(user_id: str):
+    try:
+        object_id = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+
+    pipeline = [
+        {"$match": {"user_id": object_id}},
+        {"$group": {
+            "_id": "$sector",
+            "total_emissions": {"$sum": "$estimated_co2e_kg"},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    result = await db.ghg_submissions.aggregate(pipeline).to_list(length=None)
+
+    return {
+        "user_id": user_id,
+        "labels": [r["_id"] for r in result],
+        "datasets": [{
+            "label": "User CO2e per Sector (kg)",
+            "data": [round(r["total_emissions"], 2) for r in result],
+            "backgroundColor": ["#36A2EB", "#FF6384", "#FFCE56", "#4BC0C0"]
+        }]
+    }
 
 @router.get("/compare-user-to-average/{user_id}")
 async def compare_user_to_average(user_id: str):
@@ -589,8 +585,43 @@ async def compare_user_to_average(user_id: str):
     return comparison
 
 
+# Helper function to generate a natural description
+def generate_description(community_type, community_name, city, region, labels, data):
+    total_emissions = sum(data)
+    sector_details = ", ".join(
+        [f"{d} kg from {l}" for d, l in zip(data, labels)]
+    )
+    description = (
+        f"The {community_type.lower()} '{community_name}' located in {city}, {region}, "
+        f"has reported a total annual greenhouse gas emission of approximately "
+        f"{round(total_emissions, 2)} kg CO2e. The emissions come from various sectors including "
+        f"{sector_details}. "
+        f"These are the locally relevant ways this {community_type.lower()} can reduce its emissions, "
+        f"including practical carbon offset strategies suitable for their communities."
+    )
+    return description
+
+
 @router.get("/my-summary-interpret")
 async def my_summary_interpret(request: Request, current_user=Depends(get_current_user)):
+    user_id = current_user["_id"]
+
+    # Rate limiting: check if user requested within the last 7 days
+    one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    recent_request = await db.llm_requests.find_one({
+        "user_id": user_id,
+        "endpoint": "my-summary-interpret",
+        "requested_at": {"$gte": one_week_ago}
+    })
+    if recent_request:
+        # Return 429 Too Many Requests with a message
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "detail": "You can only request this summary once per week. Please try again later."
+            }
+        )
+
     # User context
     community_type = current_user.get("community_type", "community")
     community_name = current_user.get("community_name", "your community")
@@ -599,7 +630,7 @@ async def my_summary_interpret(request: Request, current_user=Depends(get_curren
 
     # Aggregate user GHG data by sector
     pipeline = [
-        {"$match": {"user_id": current_user["_id"]}},
+        {"$match": {"user_id": user_id}},
         {"$group": {
             "_id": "$sector",
             "total_emissions": {"$sum": "$estimated_co2e_kg"},
@@ -620,10 +651,13 @@ async def my_summary_interpret(request: Request, current_user=Depends(get_curren
         f"A {community_type.lower()} named {community_name} located in {city}, {region}, "
         f"has reported these annual greenhouse gas emissions: "
         f"{'; '.join([f'{d} kg from {l}' for d, l in zip(data, labels)])}. "
-        f"Give 3 locally relevant ways this {community_type.lower()} can reduce its emissions, "
+        f"Give 2 locally relevant ways this {community_type.lower()} can reduce its emissions, "
         f"and 1 practical carbon offset strategy suitable for Philippine communities. "
         f"List them clearly using bullet points."
     )
+
+    # Natural description
+    description = generate_description(community_type, community_name, city, region, labels, data)
 
     # Call the Hugging Face chat completion in a threadpool (async-safe)
     def call_llm():
@@ -641,8 +675,16 @@ async def my_summary_interpret(request: Request, current_user=Depends(get_curren
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM failed to generate interpretation: {str(e)}")
 
+    # Log the request for rate limiting
+    await db.llm_requests.insert_one({
+        "user_id": user_id,
+        "endpoint": "my-summary-interpret",
+        "requested_at": datetime.now(timezone.utc)
+    })
+
     return {
         "summary_text": prompt,
+        "description": description,
         "ai_interpretation": ai_output,
         "raw_data": {
             "labels": labels,

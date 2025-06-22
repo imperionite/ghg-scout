@@ -92,15 +92,15 @@ class GHGSubmissionAgriculture(BaseModel):
     number_of_chickens: Optional[int] = Field(0, ge=0, description="Number of chickens")
 
     manure_management: Optional[Literal[
-        "dry_lot", "pasture", "lagoon", "composting", "none"
-    ]] = "none"
+        "dry_lot", "pasture", "lagoon", "composting", "others", "none"
+    ]] = None
 
     rice_paddy_area_hectares: Optional[float] = Field(0.0, ge=0, description="Area of rice paddies (hectares)")
     rice_water_management: Optional[Literal[
-        "continuous_flooding", "intermittent_flooding", "dry_cultivation"
-    ]] = "continuous_flooding"
+        "continuous_flooding", "intermittent_flooding", "dry_cultivation", "others"
+    ]] = None
 
-    fertilizer_type: Optional[Literal["synthetic", "organic", "none"]] = "none"
+    fertilizer_type: Optional[Literal["synthetic", "organic", "none", "others"]] = "others"
     fertilizer_applied_kg: Optional[float] = Field(0.0, ge=0, description="Amount of fertilizer applied (kg)")
 
 
