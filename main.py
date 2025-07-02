@@ -5,13 +5,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
+from contextlib import asynccontextmanager
+
 from routes.auth import router as auth_router
 from routes import ghg
 
 load_dotenv()
 
 # Lifespan event for startup and shutdown tasks
-from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +21,7 @@ async def lifespan(app: FastAPI):
     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
     yield
     # Shutdown
+
 
 # Create app with lifespan
 app = FastAPI(title="GHG Scout PH - API", lifespan=lifespan)

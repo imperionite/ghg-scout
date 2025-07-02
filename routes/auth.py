@@ -10,6 +10,7 @@ from utils.security import hash_password, verify_password
 
 router = APIRouter()
 
+
 async def get_current_user(request: Request):
     token = request.headers.get("Authorization")
     if not token or not token.startswith("Bearer "):
@@ -22,6 +23,7 @@ async def get_current_user(request: Request):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
 async def register(user: UserRegistration):
@@ -42,16 +44,17 @@ async def register(user: UserRegistration):
             community_type=new_user["community_type"],
             community_name=new_user["community_name"],
             region=new_user.get("region"),
-            city=new_user.get("city")
-        )
+            city=new_user.get("city"),
+        ),
     )
+
 
 @router.post("/login", response_model=TokenResponse)
 async def login(data: UserLogin):
     user = await db.users.find_one({"username": data.username})
     if not user or not verify_password(data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    
+
     # Invalidate all cached data
     if FastAPICache.get_backend():
         await FastAPICache.clear()
@@ -66,9 +69,10 @@ async def login(data: UserLogin):
             community_type=user["community_type"],
             community_name=user["community_name"],
             region=user.get("region"),
-            city=user.get("city")
-        )
+            city=user.get("city"),
+        ),
     )
+
 
 @router.get("/me", response_model=UserInfo)
 async def me(current_user=Depends(get_current_user)):
@@ -78,13 +82,18 @@ async def me(current_user=Depends(get_current_user)):
         community_type=current_user["community_type"],
         community_name=current_user["community_name"],
         region=current_user.get("region"),
-        city=current_user.get("city")
+        city=current_user.get("city"),
     )
 
+
 @router.patch("/user/{user_id}")
-async def update_user(user_id: str, update: UserUpdate, current_user=Depends(get_current_user)):
+async def update_user(
+    user_id: str, update: UserUpdate, current_user=Depends(get_current_user)
+):
     if str(current_user["_id"]) != user_id:
-        raise HTTPException(status_code=403, detail="You can only update your own account")
+        raise HTTPException(
+            status_code=403, detail="You can only update your own account"
+        )
     fields = {k: v for k, v in update.dict(exclude_unset=True).items()}
     fields["updated_at"] = datetime.now(timezone.utc)
 
@@ -96,15 +105,18 @@ async def update_user(user_id: str, update: UserUpdate, current_user=Depends(get
 
     return {"message": "User updated successfully"}
 
+
 @router.delete("/user/{user_id}")
 async def delete_user(user_id: str, current_user=Depends(get_current_user)):
     if str(current_user["_id"]) != user_id:
-        raise HTTPException(status_code=403, detail="You can only delete your own account")
+        raise HTTPException(
+            status_code=403, detail="You can only delete your own account"
+        )
     await db.users.delete_one({"_id": ObjectId(user_id)})
     await db.tokens.delete_many({"username": current_user["username"]})
 
     # Invalidate all cached data
     if FastAPICache.get_backend():
         await FastAPICache.clear()
-        
+
     return {"message": "User deleted successfully"}
