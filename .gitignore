@@ -8,6 +8,7 @@
 .LSOverride
 
 .env
+.env.prod
 
 # Icon must end with two \r
 Icon
