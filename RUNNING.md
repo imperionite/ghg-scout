@@ -84,5 +84,8 @@ uvicorn main:app --host=0.0.0.0 --port=$PORT
 
 # create new virtual env and upgrade pip and install dependencies from requirements file
 pip cache purge && rm -rf venv && python -m venv venv && source vevn/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+
+# uninstall any global packages aside from the needed one i local machine
+sudo pip freeze | grep -vE '^(pip|setuptools|wheel)' | xargs pip uninstall -y
 ```
 

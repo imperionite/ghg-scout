@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Literal, List
+from typing import Optional, Literal, List, Union
 
 
 # --- Auth Models (unchanged) ---
@@ -167,9 +167,11 @@ class GHGSubmissionIPPU(BaseModel):
 
 # Union of all sector submissions
 GHGSubmission = Optional[
-    GHGSubmissionEnergy
-    | GHGSubmissionTransport
-    | GHGSubmissionWaste
-    | GHGSubmissionAgriculture
-    | GHGSubmissionIPPU
+    Union[
+        GHGSubmissionEnergy,
+        GHGSubmissionTransport,
+        GHGSubmissionWaste,
+        GHGSubmissionAgriculture,
+        GHGSubmissionIPPU,
+    ]
 ]
