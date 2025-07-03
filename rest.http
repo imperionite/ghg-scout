@@ -29,6 +29,15 @@ Content-Type: application/json
 "password": "seed-password"
 }
 
+###Login
+POST https://ghg-scout.onrender.com/api/login HTTP/1.1
+Content-Type: application/json
+
+{
+"username": "user010",
+"password": "seed-password"
+}
+
 ### Get Profile
 GET http://localhost:8000/api/me HTTP/1.1
 Authorization: Bearer {{token}}
